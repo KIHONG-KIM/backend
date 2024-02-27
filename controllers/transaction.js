@@ -34,20 +34,38 @@ exports.getTransactions = async (req,res)=>{
 
 // 일정 읽어오기 (READ by Date)
 exports.getTransactionsbyDate = async (req,res)=>{
-    console.log("/, get endpoint 입니다")
-    console.log(req.query.date, "request.query.date");
+
+    console.log(req.query.date, "왜", typeof(req.query.date))
     
-    const query = String(`"2024.0\\${req.query.date}"`)
-    console.log(typeof query, query)
-    var data = null
+    var data, sum, newArray = null
     try{
-        data = await Transcation.find({ 
+        const query = {
             date: { 
-                "$regex" : `2024.0${req.query.date}`, 
+                "$regex" : `${req.query.date}`, 
                 "$options" : "s"
             }
-        })
-        // console.log('data', data);
+        }
+        const aggregation = [
+            {
+                '$match' : query
+            },
+            {
+                '$group': {
+                    _id: null,
+                    totalWithdrawal: { $sum: '$withdrawal' },
+                    totalDeposit: { $sum: '$deposit'}
+                }
+            }
+        ];
+
+        data = await Transcation.find(query)
+        console.log(data)
+        // sum = await Transcation.aggregate(aggregation)
+        // console.log(data, sum)
+        // const newArray = sum.concat(data);
+        // console.log(newArray[0])
+
+        // console.log(data)
     } catch (err){
         console.log("ERROR Get 요청 실패");
         res.json({msg:"ERROR Get 요청 실패",err});
