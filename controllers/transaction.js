@@ -5,7 +5,7 @@ const MongoClient = require('mongodb').MongoClient;
 
 exports.postTransaction = async (req,res)=>{
 
-    console.log("Trying to Create DB", req.body[0])
+    console.log("Trying to Create DB")
 
     try {
         const createTS = Transcation.insertMany(req.body)
