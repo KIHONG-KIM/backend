@@ -1,7 +1,7 @@
 const router = require("express").Router();
 
 const {postProfile,getProfiles} = require("./controllers/profile");
-const {postTransaction,getTransactions, getTransactionsbyDate} = require("./controllers/transaction");
+const {postTransaction,getTransactions,getTransactionsbyDate} = require("./controllers/transaction");
 
 router.post("/profile",postProfile);
 router.get("/profile",getProfiles);

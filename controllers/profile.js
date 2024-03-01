@@ -3,7 +3,7 @@ const Profile = require("../models/profile.js");
 
 exports.postProfile = async (req,res) => {
 
-    console.log("/profile 입니다")
+    console.log("/profile Post Profile")
     if (req.body === undefined ) {
         console.log("ERROR!! req.body undefined!!")
         console.log("req.body, query:", req.body, req.query)
@@ -42,7 +42,7 @@ exports.postProfile = async (req,res) => {
 
 exports.getProfiles = async (req,res) => {
 
-    console.log("/, get endpoint 입니다")
+    console.log("/, get Profile")
 
     try{
         const data = await Profile.find({})
