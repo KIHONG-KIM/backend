@@ -10,6 +10,7 @@ const transaction = new Schema({
     balance:{ type:Number },
     place:{ type:String },
     etc:{ type:String },
+    category:{ type: String }
 },
     { versionKey: false } // option
 );

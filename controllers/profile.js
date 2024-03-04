@@ -1,4 +1,3 @@
-// 일정저장 (CREATE)
 const Profile = require("../models/profile.js");
 
 exports.postProfile = async (req,res) => {

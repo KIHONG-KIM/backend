@@ -1,6 +1,5 @@
 const Transcation = require("../models/transaction");
-// const { connect, create, read, update, remove } = require('./../config/db');
-const MongoClient = require('mongodb').MongoClient;
+
 
 // insertMany
 exports.postTransaction = async (req,res)=>{
@@ -47,12 +46,35 @@ exports.getTransactionsbyDate = async (req,res)=>{
         }
 
         data = await Transcation.find(query)
-        // console.log(data)
+        console.log(data[0])
     } catch (err){
         console.log("ERROR Get 요청 실패");
         res.json({msg:"ERROR Get 요청 실패",err});
     }
     res.json(data)
+}
+
+// 수정하기 ("미분류" => 자동 수정)
+exports.postTransactionUpadate = (req,res)=>{
+
+    console.log("### BACKEND post /transactionUpdate, updateOne ###")
+    console.log("Trying to updateOne data")
+
+
+    var data = null;
+    for ( var i = 0 ; i < req.body.length ; i ++) {
+        try {
+            const updateOne = Transcation.updateOne(
+                { title: data.title }, 
+                { $set : 
+                    { category: data.category } 
+                })
+        } catch (err) {
+            console.log(err)
+        }
+    }
+    console.log ("### FINISH ###")
+
 }
 
 // 일정 읽어오기 (READ for Calendar)
@@ -77,6 +99,27 @@ exports.getTransactionsCalendar = async (req,res)=>{
 
         data = await Transcation.aggregate(aggregation)
         console.log(data)
+    } catch (err){
+        console.log("ERROR Get 요청 실패");
+        res.json({msg:"ERROR Get 요청 실패",err});
+    }
+    res.json(data)
+}
+
+// 일정 읽어오기 (READ for Calendar)
+exports.test = async (req,res)=>{
+
+    var data = null;
+    var 날짜 = "2024.01"
+    try{
+        const query = {
+            date: { 
+                "$regex" : 날짜, 
+                "$options" : "s"
+            }
+        }
+
+        data = await Transcation.find(query)
     } catch (err){
         console.log("ERROR Get 요청 실패");
         res.json({msg:"ERROR Get 요청 실패",err});
