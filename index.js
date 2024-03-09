@@ -52,29 +52,3 @@ app.listen(process.env.PORT, () => {
 const routes = require("./routes");
 app.use(routes);
 
-
-async function main() {
-
-  const assistant_id = asst_dWzY54dGBv91b4rudTiCrrCP;
-
-  const thread = await openai.beta.threads.create({
-    messages: [
-      {
-        "role": "user",
-        "content": "Create 3 data visualizations based on the trends in this file.",
-        "file_ids": [file.id]
-      }
-    ]
-  });
-  
-  
-  const run = await openai.beta.threads.runs.create(
-    thread.id,
-    {
-      assistant_id: assistant_id,
-      model: "gpt-4-turbo-preview",
-      instructions: "New instructions that override the Assistant instructions",
-      tools: [{"type": "code_interpreter"}, {"type": "retrieval"}]
-    }
-  );
-}

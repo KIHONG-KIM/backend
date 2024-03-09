@@ -17,10 +17,31 @@ exports.postTransaction = async (req,res)=>{
 exports.getTransactions = async (req,res)=>{
     console.log("### BACKEND get /transactions, find({})")
 
-    var data = null
+    var data = null;
     try{
-        data = await Transcation.find({})
+        data = await Transcation.find({});
         // console.log('data', data);
+    } catch (err){
+        console.log("ERROR Get 요청 실패");
+        res.json({msg:"ERROR Get 요청 실패",err});
+    }
+    res.json(data)
+}
+
+// 일정 읽어오기 (ALL)
+exports.getTransactionsByCat = async (req,res)=>{
+    console.log("### BACKEND get TransactionsBy`Category`, find({ category: 'category'})");
+
+    console.log( typeof(req.query.category) );
+    console.log(req.query.category);
+    
+    var searchOption = null;
+    var data = null;
+    searchOption = req.query.category;
+
+    try{
+        data = await Transcation.find({ "category": searchOption })
+        console.log('data', data);
     } catch (err){
         console.log("ERROR Get 요청 실패");
         res.json({msg:"ERROR Get 요청 실패",err});
@@ -55,13 +76,11 @@ exports.getTransactionsbyDate = async (req,res)=>{
 }
 
 // 수정하기 ("미분류" => 자동 수정)
-exports.postTransactionUpadate = (req,res)=>{
+exports.postTransactionUpadate = (data)=>{
 
     console.log("### BACKEND post /transactionUpdate, updateOne ###")
     console.log("Trying to updateOne data")
 
-
-    var data = null;
     for ( var i = 0 ; i < req.body.length ; i ++) {
         try {
             const updateOne = Transcation.updateOne(
