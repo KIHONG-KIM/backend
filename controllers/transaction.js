@@ -1,4 +1,4 @@
-const Transcation = require("../models/transaction");
+const transaction = require("../models/transaction");
 
 
 // insertMany
@@ -7,7 +7,7 @@ exports.postTransaction = async (req,res)=>{
 
     console.log("Trying to Create DB")
     try {
-        const createTS = Transcation.insertMany(req.body)
+        const createTS = transaction.insertMany(req.body)
     } catch (err) {
         console.log(err)
     }
@@ -16,11 +16,11 @@ exports.postTransaction = async (req,res)=>{
 // 일정 읽어오기 (ALL)
 exports.getTransactions = async (req,res)=>{
     console.log("### BACKEND get /transactions, find({})")
-
+    
     var data = null;
     try{
-        data = await Transcation.find({});
-        // console.log('data', data);
+        data = await transaction.find({});
+        console.log('data', data);
     } catch (err){
         console.log("ERROR Get 요청 실패");
         res.json({msg:"ERROR Get 요청 실패",err});
@@ -28,7 +28,7 @@ exports.getTransactions = async (req,res)=>{
     res.json(data)
 }
 
-// 일정 읽어오기 (ALL)
+// 읽어오기 (Category 분류에 의한)
 exports.getTransactionsByCat = async (req,res)=>{
     console.log("### BACKEND get TransactionsBy`Category`, find({ category: 'category'})");
 
@@ -40,7 +40,7 @@ exports.getTransactionsByCat = async (req,res)=>{
     searchOption = req.query.category;
 
     try{
-        data = await Transcation.find({ "category": searchOption })
+        data = await transaction.find({ "category": searchOption })
         console.log('data', data);
     } catch (err){
         console.log("ERROR Get 요청 실패");
@@ -49,7 +49,7 @@ exports.getTransactionsByCat = async (req,res)=>{
     res.json(data)
 }
 
-// 일정 읽어오기 (READ by Date)
+// 읽어오기 (날짜 분류에 의한)
 exports.getTransactionsbyDate = async (req,res)=>{
     console.log("### BACKEND get /transactionsByDate, $regex: 'YYYY.MM'")
 
@@ -57,7 +57,7 @@ exports.getTransactionsbyDate = async (req,res)=>{
     
     var data = null;
     var 날짜 = req.query.date;  
-    var newArray = null
+
     try{
         const query = {
             date: { 
@@ -66,7 +66,7 @@ exports.getTransactionsbyDate = async (req,res)=>{
             }
         }
 
-        data = await Transcation.find(query)
+        data = await transaction.find(query)
         console.log(data[0])
     } catch (err){
         console.log("ERROR Get 요청 실패");
@@ -75,23 +75,28 @@ exports.getTransactionsbyDate = async (req,res)=>{
     res.json(data)
 }
 
-// 수정하기 ("미분류" => 자동 수정)
-exports.postTransactionUpadate = (data)=>{
+// 수정하기 ("미분류" => 수동 수정)
+exports.postTransactionUpdate = async (req, res)=>{
 
     console.log("### BACKEND post /transactionUpdate, updateOne ###")
     console.log("Trying to updateOne data")
+    const data = req.body;
+    
 
-    for ( var i = 0 ; i < req.body.length ; i ++) {
         try {
-            const updateOne = Transcation.updateOne(
-                { title: data.title }, 
-                { $set : 
-                    { category: data.category } 
-                })
+            for ( var i = 0 ; i < req.body.length ; i ++) {
+
+                console.log(data[i])
+                const updateOne = await transaction.updateMany(
+                    { title: data[i].title }, 
+                    { $set : 
+                        { category: data[i].category } 
+                    })
+                console.log(updateOne, "###### updateOne ######")
+            }
         } catch (err) {
             console.log(err)
         }
-    }
     console.log ("### FINISH ###")
 
 }
@@ -116,7 +121,7 @@ exports.getTransactionsCalendar = async (req,res)=>{
             }
         ];
 
-        data = await Transcation.aggregate(aggregation)
+        data = await transaction.aggregate(aggregation)
         console.log(data)
     } catch (err){
         console.log("ERROR Get 요청 실패");
@@ -126,19 +131,92 @@ exports.getTransactionsCalendar = async (req,res)=>{
 }
 
 // 일정 읽어오기 (READ for Calendar)
-exports.test = async (req,res)=>{
+exports.aggrBar = async (req,res)=>{
 
     var data = null;
-    var 날짜 = "2024.01"
     try{
-        const query = {
-            date: { 
-                "$regex" : 날짜, 
-                "$options" : "s"
-            }
-        }
+        const aggregation = [
+            {
+                $project: {
+                  month: { $substr: [ { $dateToString: { date: "$dateField", format: "%Y-%m" } }, 0, 2 ] },
+                  category: "$category",
+                  value: 1
+                }
+              }]
+        
+        data = await transaction.aggregate(aggregation)
+        console.log(data)
+    } catch (err){
+        console.log("ERROR Get 요청 실패");
+        res.json({msg:"ERROR Get 요청 실패",err});
+    }
+    res.json(data)
+}
 
-        data = await Transcation.find(query)
+exports.getAggrbyDate = async (req,res)=>{
+    
+    var data = null; // 결과값
+    var 날짜 = req.query.date;  // 날짜
+    console.log (날짜, "날짜")
+    const query = {
+        date: { 
+            "$regex" : 날짜, // 날짜 데이터 바로 넘겨주기
+            "$options" : "s"
+        }
+    }
+
+    try{
+        const aggregation = [
+            {
+                $facet: {
+                    "category": [
+                            { $match: query },            
+                            { $group : {
+                                _id: '$category', 
+                                targets: { 
+                                    '$push': '$title' 
+                                },
+                                Total: {
+                                    '$sum': '$withdrawal'
+                                },
+                                count: {
+                                    '$sum': 1
+                                },
+                                arr:{
+                                    '$push': {
+                                        'title': '$title',
+                                        'date': '$date'
+                                    } 
+                                },
+                                                                start: { 
+                                    '$min':'$date'
+                                },
+                                last: {
+                                    '$max': '$date'
+                                }      
+                            }
+                        }
+                    ],
+                    "date": [
+                        { $match: query }, 
+                        {
+                            $group: {
+                                _id: null, 
+                                start: { 
+                                    '$min':'$date'
+                                },
+                                last: {
+                                    '$max': '$date'
+                                }
+                            }
+                        }
+                    ],
+                    }
+                }
+            ]
+        
+        data = await transaction.aggregate(aggregation)
+        console.log(data)
     } catch (err){
         console.log("ERROR Get 요청 실패");
         res.json({msg:"ERROR Get 요청 실패",err});
